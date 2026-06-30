@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UITTC – Bus Pass Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Nunito:wght@300;400;600;700;800&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --college-navy: #0a1628;
+    --college-blue: #1a3a6b;
+    --college-gold: #f5a623;
+    --college-amber: #e8870a;
+    --bus-orange: #d45800;
+    --bus-red: #c0392b;
+    --accent-teal: #00b4d8;
+    --light-bg: #f0f4ff;
+    --card-bg: #ffffff;
+    --text-dark: #0a1628;
+    --text-muted: #5a6a8a;
+    --border: #d0d8ef;
+    --success: #27ae60;
+    --danger: #e74c3c;
+    --warning: #f39c12;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--college-navy);
+    color: var(--text-dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* =========== SPLASH SCREEN =========== */
+  #splash {
+    position: fixed; inset: 0; z-index: 1000;
+    background: linear-gradient(135deg, #0a1628 0%, #1a3a6b 50%, #0a1628 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px;
+  }
+
+  .splash-road {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 120px;
+    background: linear-gradient(to top, #2c2c2c, transparent);
+    overflow: hidden;
+  }
+  .road-line {
+    position: absolute; bottom: 30px; height: 6px; background: var(--college-gold);
+    animation: roadScroll 1s linear infinite;
+    border-radius: 3px;
+  }
+  .road-line:nth-child(1) { width: 80px; left: 10%; animation-delay: 0s; }
+  .road-line:nth-child(2) { width: 80px; left: 35%; animation-delay: 0.3s; }
+  .road-line:nth-child(3) { width: 80px; left: 60%; animation-delay: 0.6s; }
+  .road-line:nth-child(4) { width: 80px; left: 80%; animation-delay: 0.9s; }
+  @keyframes roadScroll { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(200px); opacity: 0; } }
+
+  .splash-bus-svg { animation: busDrive 0.8s ease-out 0.5s both; }
+  @keyframes busDrive { from { transform: translateX(-200px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  .splash-logo-area { text-align: center; animation: fadeUp 0.8s ease-out 1s both; }
+  @keyframes fadeUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .splash-uittc {
+    font-family: 'Orbitron', monospace;
+    font-size: 72px; font-weight: 900;
+    background: linear-gradient(135deg, #f5a623, #ffffff, #f5a623);
+    background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: 8px;
+    text-shadow: none;
+  }
+
+  .splash-tagline {
+    font-family: 'Rajdhani', sans-serif;
+    color: rgba(255,255,255,0.75);
+    font-size: 14px; letter-spacing: 3px;
+    text-transform: uppercase; margin-top: 6px;
+  }
+
+  .splash-college-name {
+    font-family: 'Nunito', sans-serif;
+    color: var(--college-gold);
+    font-size: 18px; font-weight: 700;
+    margin-top: 10px; letter-spacing: 1px;
+  }
+
+  .splash-loader {
+    width: 200px; height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px; overflow: hidden;
+    animation: fadeUp 0.8s ease-out 1.5s both;
+  }
+  .splash-loader-bar {
+    height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--college-gold), var(--bus-orange));
+    border-radius: 2px;
+    animation: loading 2s ease-out 1.8s forwards;
+  }
+  @keyframes loading { to { width: 100%; } }
+
+  /* =========== MAIN APP =========== */
+  #app { display: none; min-height: 100vh; background: var(--light-bg); }
+
+  /* =========== LOGIN PAGE =========== */
+  #login-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a1628 0%, #1a3a6b 60%, #0a2040 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .login-bg-pattern {
+    position: absolute; inset: 0; opacity: 0.05;
+    background-image: repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%);
+    background-size: 20px 20px;
+  }
+  .login-bus-decoration {
+    position: absolute; right: -40px; bottom: 20px; opacity: 0.08;
+  }
+
+  .login-card {
+    background: white; border-radius: 24px;
+    padding: 48px 44px; width: 420px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+    position: relative; z-index: 1;
+    animation: slideIn 0.6s ease-out;
+  }
+  @keyframes slideIn { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .login-header { text-align: center; margin-bottom: 32px; }
+
+  .login-logo-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .uittc-badge {
+    background: linear-gradient(135deg, var(--college-navy), var(--college-blue));
+    border-radius: 14px; padding: 10px 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .uittc-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 26px; font-weight: 900; color: var(--college-gold);
+    letter-spacing: 2px;
+  }
+
+  .login-page-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px; font-weight: 600;
+    color: var(--text-muted); letter-spacing: 1px;
+    text-transform: uppercase; line-height: 1.4;
+    margin-top: 8px;
+  }
+  .login-page-subtitle {
+    font-size: 13px; color: #aaa; margin-top: 4px;
+  }
+
+  .login-tabs {
+    display: flex; gap: 8px; margin-bottom: 28px;
+    background: var(--light-bg); border-radius: 12px; padding: 4px;
+  }
+  .login-tab {
+    flex: 1; padding: 10px; border: none; background: transparent;
+    border-radius: 10px; cursor: pointer; font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 600; color: var(--text-muted);
+    transition: all 0.3s;
+  }
+  .login-tab.active {
+    background: white; color: var(--college-blue);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block; font-size: 13px; font-weight: 700;
+    color: var(--text-dark); margin-bottom: 6px; letter-spacing: 0.5px;
+  }
+  .form-input {
+    width: 100%; padding: 12px 16px; border: 2px solid var(--border);
+    border-radius: 12px; font-family: 'Nunito', sans-serif; font-size: 15px;
+    color: var(--text-dark); background: #fafbff;
+    transition: all 0.3s; outline: none;
+  }
+  .form-input:focus { border-color: var(--college-blue); background: white; box-shadow: 0 0 0 4px rgba(26,58,107,0.08); }
+
+  .btn-login {
+    width: 100%; padding: 14px; border: none;
+    background: linear-gradient(135deg, var(--college-blue), var(--college-navy));
+    color: white; border-radius: 12px; font-family: 'Nunito', sans-serif;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: all 0.3s; letter-spacing: 0.5px;
+    position: relative; overflow: hidden;
+  }
+  .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,58,107,0.35); }
+  .btn-login:active { transform: translateY(0); }
+
+  .login-hint {
+    text-align: center; margin-top: 16px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .login-hint span { color: var(--bus-orange); font-weight: 700; }
+
+  /* =========== MAIN LAYOUT =========== */
+  .app-layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px; background: linear-gradient(180deg, var(--college-navy) 0%, #0d2040 100%);
+    display: flex; flex-direction: column; flex-shrink: 0;
+    position: fixed; left: 0; top: 0; bottom: 0;
+    z-index: 100; overflow-y: auto;
+  }
+
+  .sidebar-logo {
+    padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+  }
+  .sidebar-uittc {
+    font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 900;
+    color: var(--college-gold); letter-spacing: 3px;
+  }
+  .sidebar-fullname {
+    font-size: 10px; color: rgba(255,255,255,0.55);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-top: 4px; line-height: 1.4;
+  }
+
+  .sidebar-user {
+    padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .user-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--college-gold), var(--bus-orange));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 16px; color: white;
+  }
+  .user-info { flex: 1; }
+  .user-name { font-size: 14px; font-weight: 700; color: white; }
+  .user-role { font-size: 11px; color: var(--college-gold); text-transform: uppercase; letter-spacing: 1px; }
+
+  .sidebar-nav { padding: 16px 12px; flex: 1; }
+  .nav-section-title {
+    font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.35);
+    text-transform: uppercase; letter-spacing: 2px;
+    padding: 8px 8px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px; border-radius: 10px; cursor: pointer;
+    color: rgba(255,255,255,0.65); font-size: 14px; font-weight: 600;
+    transition: all 0.25s; margin-bottom: 2px; border: none; background: none;
+    width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--college-gold), var(--bus-orange));
+    color: var(--college-navy); font-weight: 800;
+  }
+  .nav-icon { width: 20px; text-align: center; font-size: 16px; }
+
+  .sidebar-footer {
+    padding: 16px; border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .btn-logout {
+    width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7);
+    border-radius: 10px; cursor: pointer; font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 600; transition: all 0.3s;
+  }
+  .btn-logout:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+  .main-content { margin-left: 260px; flex: 1; }
+
+  .topbar {
+    background: white; padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .topbar-title { font-size: 20px; font-weight: 800; color: var(--college-navy); font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; }
+  .topbar-breadcrumb { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .topbar-badge {
+    background: var(--college-gold); color: var(--college-navy);
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 800;
+  }
+
+  .page-content { padding: 28px 32px; }
+
+  /* =========== STATS CARDS =========== */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: white; border-radius: 16px; padding: 22px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    transition: transform 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 14px;
+  }
+  .stat-icon.blue { background: #e8f0fe; }
+  .stat-icon.gold { background: #fff3cd; }
+  .stat-icon.green { background: #d4edda; }
+  .stat-icon.red { background: #fde8e8; }
+  .stat-number { font-size: 32px; font-weight: 800; color: var(--college-navy); font-family: 'Rajdhani', sans-serif; }
+  .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+
+  /* =========== SECTION CARDS =========== */
+  .section-card {
+    background: white; border-radius: 16px; padding: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    margin-bottom: 24px;
+  }
+  .section-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; padding-bottom: 16px;
+    border-bottom: 2px solid var(--light-bg);
+  }
+  .section-card-title {
+    font-size: 17px; font-weight: 800; color: var(--college-navy);
+    font-family: 'Rajdhani', sans-serif; letter-spacing: 0.5px;
+  }
+
+  /* =========== BUTTONS =========== */
+  .btn { padding: 9px 18px; border-radius: 10px; border: none; cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+    transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--college-blue); color: white; }
+  .btn-primary:hover { background: var(--college-navy); transform: translateY(-1px); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-warning { background: var(--warning); color: white; }
+  .btn-outline { background: transparent; color: var(--college-blue); border: 2px solid var(--college-blue); }
+  .btn-outline:hover { background: var(--college-blue); color: white; }
+  .btn-gold { background: linear-gradient(135deg, var(--college-gold), var(--bus-orange)); color: var(--college-navy); font-weight: 800; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  /* =========== TABLE =========== */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    background: var(--light-bg); padding: 12px 16px;
+    text-align: left; font-size: 12px; font-weight: 800;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+  }
+  .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .data-table tr:hover td { background: #f8faff; }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .badge {
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    display: inline-block;
+  }
+  .badge-success { background: #d4edda; color: #155724; }
+  .badge-danger { background: #fde8e8; color: #721c24; }
+  .badge-warning { background: #fff3cd; color: #856404; }
+  .badge-info { background: #cce5ff; color: #004085; }
+
+  /* =========== STUDENT PHOTO =========== */
+  .student-avatar {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--college-blue), var(--accent-teal));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px; color: white;
+  }
+
+  /* =========== BUS STOP SECTION =========== */
+  .bus-stop-group { margin-bottom: 24px; }
+  .bus-stop-header {
+    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+    background: linear-gradient(135deg, var(--college-navy), var(--college-blue));
+    border-radius: 10px 10px 0 0; color: white;
+  }
+  .bus-stop-icon { font-size: 20px; }
+  .bus-stop-name { font-weight: 800; font-size: 15px; }
+  .bus-stop-count { margin-left: auto; background: var(--college-gold); color: var(--college-navy); padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 800; }
+
+  /* =========== MODAL =========== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 20px; padding: 32px;
+    width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.3);
+    animation: modalIn 0.3s ease-out;
+  }
+  @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-title { font-size: 20px; font-weight: 800; color: var(--college-navy); font-family: 'Rajdhani', sans-serif; margin-bottom: 24px; }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+
+  /* =========== STUDENT PASS =========== */
+  .bus-pass {
+    background: linear-gradient(135deg, #0a1628 0%, #1a3a6b 100%);
+    border-radius: 20px; padding: 28px; color: white;
+    max-width: 400px; position: relative; overflow: hidden;
+  }
+  .pass-pattern {
+    position: absolute; inset: 0; opacity: 0.05;
+    background-image: repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 12px);
+    background-size: 16px 16px;
+  }
+  .pass-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; position: relative; }
+  .pass-uittc { font-family: 'Orbitron', monospace; font-size: 24px; font-weight: 900; color: var(--college-gold); letter-spacing: 3px; }
+  .pass-year { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  .pass-photo { width: 70px; height: 80px; border-radius: 10px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 30px; border: 2px solid var(--college-gold); }
+  .pass-body { position: relative; }
+  .pass-field { margin-bottom: 12px; }
+  .pass-field-label { font-size: 10px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 1.5px; }
+  .pass-field-value { font-size: 15px; font-weight: 700; margin-top: 2px; }
+  .pass-divider { border-color: rgba(255,255,255,0.2); margin: 16px 0; }
+  .pass-barcode {
+    background: white; border-radius: 8px; padding: 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 16px;
+  }
+  .barcode-lines { display: flex; gap: 2px; height: 40px; align-items: stretch; }
+  .barcode-lines span { background: #000; width: 2px; }
+  .barcode-lines span:nth-child(3n) { width: 4px; }
+  .barcode-lines span:nth-child(5n) { width: 1px; }
+  .barcode-num { font-size: 11px; color: #444; font-family: monospace; }
+
+  /* =========== SEARCH BAR =========== */
+  .search-bar {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 20px;
+  }
+  .search-input {
+    flex: 1; padding: 10px 16px; border: 2px solid var(--border);
+    border-radius: 10px; font-family: 'Nunito', sans-serif; font-size: 14px;
+    outline: none; transition: border-color 0.3s;
+  }
+  .search-input:focus { border-color: var(--college-blue); }
+  .filter-select {
+    padding: 10px 14px; border: 2px solid var(--border);
+    border-radius: 10px; font-family: 'Nunito', sans-serif; font-size: 14px;
+    background: white; outline: none; cursor: pointer;
+  }
+
+  /* =========== WELCOME BANNER =========== */
+  .welcome-banner {
+    background: linear-gradient(135deg, var(--college-navy) 0%, var(--college-blue) 100%);
+    border-radius: 20px; padding: 28px 32px; margin-bottom: 28px;
+    color: white; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .welcome-banner::before {
+    content: ''; position: absolute; right: -20px; top: -20px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: rgba(245,166,35,0.1);
+  }
+  .welcome-text h2 { font-size: 24px; font-weight: 800; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; }
+  .welcome-text p { color: rgba(255,255,255,0.7); font-size: 14px; margin-top: 4px; }
+  .welcome-badge {
+    background: rgba(245,166,35,0.2); border: 1px solid var(--college-gold);
+    color: var(--college-gold); padding: 8px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 700;
+  }
+
+  /* =========== NOTIFICATION =========== */
+  .notification {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    background: var(--success); color: white;
+    padding: 14px 20px; border-radius: 12px;
+    font-weight: 700; font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transform: translateX(400px); transition: transform 0.4s ease;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .notification.show { transform: translateX(0); }
+  .notification.error { background: var(--danger); }
+
+  /* =========== STUDENT DASHBOARD =========== */
+  .student-pass-container {
+    display: flex; justify-content: center; padding: 20px 0;
+  }
+
+  .payment-timeline { padding: 8px 0; }
+  .timeline-item { display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start; }
+  .timeline-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .timeline-dot.paid { background: var(--success); }
+  .timeline-dot.pending { background: var(--warning); }
+  .timeline-dot.overdue { background: var(--danger); }
+  .timeline-content { flex: 1; }
+  .timeline-title { font-size: 14px; font-weight: 700; }
+  .timeline-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* =========== RESPONSIVE =========== */
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+    .main-content { margin-left: 0; }
+  }
+
+  .page-section { display: none; }
+  .page-section.active { display: block; }
+
+  /* =========== FORM STYLING =========== */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group-full { margin-bottom: 16px; }
+  .form-select { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; font-family: 'Nunito', sans-serif; font-size: 15px; background: #fafbff; outline: none; }
+  .form-select:focus { border-color: var(--college-blue); }
+  .photo-upload { border: 2px dashed var(--border); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: border-color 0.3s; }
+  .photo-upload:hover { border-color: var(--college-blue); }
+
+  /* =========== MARQUEE =========== */
+  .marquee-bar {
+    background: linear-gradient(135deg, var(--college-gold), var(--bus-orange));
+    padding: 8px 0; overflow: hidden; white-space: nowrap;
+  }
+  .marquee-inner {
+    display: inline-block; animation: marqueeScroll 20s linear infinite;
+    font-size: 13px; font-weight: 700; color: var(--college-navy);
+  }
+  @keyframes marqueeScroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+  .highlight-box {
+    background: linear-gradient(135deg, #fff3cd, #ffeeba);
+    border-left: 4px solid var(--college-gold);
+    border-radius: 0 12px 12px 0; padding: 14px 18px; margin-bottom: 16px;
+    font-size: 14px; font-weight: 600; color: #856404;
+  }
+
+  /* =========== BUS ANIMATIONS =========== */
+
+  /* Splash: wheels spin on bus */
+  @keyframes wheelSpin { from { transform-origin: center; transform: rotate(0deg); } to { transform-origin: center; transform: rotate(360deg); } }
+  .splash-wheel { animation: wheelSpin 0.7s linear infinite; transform-box: fill-box; transform-origin: center; }
+
+  /* Splash: bus bobs gently after arriving */
+  @keyframes busBob { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+  .splash-bus-svg { animation: busDrive 0.8s ease-out 0.5s both; }
+  .splash-bus-bob { animation: busDrive 0.8s ease-out 0.5s both, busBob 1.8s ease-in-out 1.5s infinite; }
+
+  /* Splash: exhaust puffs */
+  @keyframes puff { 0% { opacity:0.7; transform: translate(0,0) scale(0.5); } 100% { opacity:0; transform: translate(-30px,-20px) scale(2); } }
+  .puff { animation: puff 1.2s ease-out infinite; }
+  .puff:nth-child(2) { animation-delay: 0.4s; }
+  .puff:nth-child(3) { animation-delay: 0.8s; }
+
+  /* Login page: bus drives across bottom */
+  .login-bus-lane {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+    overflow: hidden; pointer-events: none;
+  }
+  .login-road-surface {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 50px;
+    background: rgba(0,0,0,0.35);
+  }
+  .login-road-line {
+    position: absolute; bottom: 21px; height: 4px; width: 60px;
+    background: rgba(245,166,35,0.6); border-radius: 2px;
+  }
+  @keyframes loginRoadLine { 0%{ transform:translateX(0); opacity:1; } 100%{ transform:translateX(-200px); opacity:0; } }
+  .login-road-line:nth-child(2){ left:15%; animation: loginRoadLine 1.5s linear infinite; }
+  .login-road-line:nth-child(3){ left:38%; animation: loginRoadLine 1.5s linear infinite 0.5s; }
+  .login-road-line:nth-child(4){ left:61%; animation: loginRoadLine 1.5s linear infinite 1s; }
+  .login-road-line:nth-child(5){ left:84%; animation: loginRoadLine 1.5s linear infinite 0.25s; }
+
+  @keyframes loginBusDrive { 0%{ transform:translateX(-200px); } 100%{ transform:translateX(110vw); } }
+  .login-animated-bus { position: absolute; bottom: 12px; animation: loginBusDrive 9s linear infinite; }
+  .login-animated-bus svg .lbus-wheel { animation: wheelSpin 0.5s linear infinite; transform-box: fill-box; transform-origin: center; }
+
+  /* Sidebar bus icon pulse */
+  @keyframes sidebarBusPulse { 0%,100%{ transform: scale(1) translateX(0); } 50%{ transform: scale(1.08) translateX(3px); } }
+  .sidebar-bus-icon { animation: sidebarBusPulse 3s ease-in-out infinite; display: inline-block; }
+
+  /* Topbar: mini bus rolls across */
+  .topbar-bus-lane {
+    width: 90px; height: 28px; overflow: hidden;
+    border-radius: 8px; background: rgba(26,58,107,0.07);
+    position: relative;
+  }
+  @keyframes topbarBus { 0%{ transform:translateX(-60px); } 100%{ transform:translateX(100px); } }
+  .topbar-bus-anim { position:absolute; top:4px; animation: topbarBus 4s linear infinite; }
+  .topbar-bus-anim .tb-wheel { animation: wheelSpin 0.4s linear infinite; transform-box: fill-box; transform-origin: center; }
+
+  /* Welcome banner: bus silhouette glides */
+  @keyframes bannerBus { 0%{ transform:translateX(-120px); opacity:0.18; } 60%{ opacity:0.18; } 100%{ transform:translateX(600px); opacity:0; } }
+  .banner-bus-slide { position:absolute; bottom:10px; right:0; animation: bannerBus 7s linear infinite 1s; pointer-events:none; }
+  .banner-bus-slide .bb-wheel { animation: wheelSpin 0.5s linear infinite; transform-box: fill-box; transform-origin: center; }
+
+  /* Road strip under welcome banner */
+  .banner-road { position:absolute; bottom:0; left:0; right:0; height:30px; background:rgba(0,0,0,0.25); border-radius: 0 0 20px 20px; overflow:hidden; }
+  @keyframes bannerDash { 0%{ transform:translateX(0); } 100%{ transform:translateX(-120px); } }
+  .banner-road-dashes { display:flex; gap:20px; position:absolute; bottom:11px; left:0; animation: bannerDash 1.2s linear infinite; }
+  .banner-road-dash { width:50px; height:4px; background:rgba(245,166,35,0.5); border-radius:2px; flex-shrink:0; }
+
+  /* Stat card bus icon bounce */
+  @keyframes statBusBounce { 0%,100%{ transform:rotate(-5deg); } 50%{ transform:rotate(5deg); } }
+  .bus-stat-icon { animation: statBusBounce 1.2s ease-in-out infinite; display:inline-block; }
+
+  /* Bus pass animated stripe */
+  @keyframes passStripe { 0%{ background-position: 0 0; } 100%{ background-position: 40px 0; } }
+  .pass-animated-stripe {
+    height: 6px; border-radius: 3px; margin: 10px 0;
+    background: repeating-linear-gradient(90deg, #f5a623 0, #f5a623 20px, #e8870a 20px, #e8870a 40px);
+    animation: passStripe 0.8s linear infinite;
+    background-size: 40px 100%;
+  }
+
+  /* Floating bus particles on splash */
+  @keyframes floatUp { 0%{ transform:translateY(0) rotate(0deg); opacity:0.6; } 100%{ transform:translateY(-120px) rotate(20deg); opacity:0; } }
+  .splash-particle { position:absolute; border-radius:50%; animation: floatUp 3s ease-in infinite; pointer-events:none; }
+
+  /* =========== ENHANCED STUDENT PORTAL STYLES =========== */
+  .pass-download-bar { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-radius:14px; margin-bottom:20px; border:1px solid; }
+  .pass-download-bar.unlocked { background:linear-gradient(135deg,rgba(39,174,96,.07),rgba(39,174,96,.02)); border-color:rgba(39,174,96,.3); }
+  .pass-download-bar.locked   { background:linear-gradient(135deg,rgba(231,76,60,.05),rgba(231,76,60,.01)); border-color:rgba(231,76,60,.25); }
+  .pdb-info .pdb-title { font-size:15px; font-weight:800; color:var(--text-dark); }
+  .pdb-info .pdb-sub   { font-size:12px; color:var(--text-muted); margin-top:3px; }
+  .pass-download-bar.locked .pdb-title { color:var(--danger); }
+
+  .bus-pass-v2 { width:390px; border-radius:22px; overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.22), 0 0 0 1px rgba(26,58,107,.12); background:linear-gradient(145deg,#0a1628 0%,#1a3a6b 100%); color:#fff; position:relative; }
+  .pass-v2-stripe { height:8px; background:repeating-linear-gradient(90deg,#f5a623 0,#f5a623 18px,#e8870a 18px,#e8870a 36px); animation:passStripe .8s linear infinite; background-size:36px 100%; }
+  .pass-v2-header { display:flex; justify-content:space-between; align-items:center; padding:18px 22px 12px; }
+  .pass-v2-uittc  { font-family:'Orbitron',monospace; font-size:22px; font-weight:900; color:var(--college-gold); letter-spacing:3px; }
+  .pass-v2-issuer { font-size:9px; color:rgba(255,255,255,.45); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+  .pass-v2-chip   { background:rgba(245,166,35,.2); border:1px solid rgba(245,166,35,.4); border-radius:20px; padding:4px 12px; font-size:11px; font-weight:700; color:var(--college-gold); }
+  .pass-v2-photo-row { display:flex; align-items:center; gap:16px; padding:0 22px 14px; }
+  .pass-v2-photo  { width:74px; height:86px; border-radius:12px; background:rgba(255,255,255,.1); border:2px solid rgba(245,166,35,.35); display:flex; align-items:center; justify-content:center; font-size:38px; flex-shrink:0; }
+  .pass-v2-sname  { font-size:18px; font-weight:800; }
+  .pass-v2-sreg   { font-size:13px; color:var(--college-gold); font-weight:700; font-family:'Rajdhani',sans-serif; letter-spacing:1px; margin-top:3px; }
+  .pass-v2-sdept  { font-size:11px; color:rgba(255,255,255,.5); margin-top:2px; }
+  .pass-v2-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 22px 16px; }
+  .pass-v2-field  { background:rgba(255,255,255,.07); border-radius:10px; padding:10px 13px; }
+  .pass-v2-label  { font-size:9px; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,.42); margin-bottom:4px; }
+  .pass-v2-value  { font-size:14px; font-weight:700; }
+  .pass-v2-value.hi { color:var(--college-gold); }
+  .pass-v2-bc     { padding:12px 22px; border-top:1px dashed rgba(255,255,255,.15); }
+  .pass-v2-bclines{ display:flex; gap:2px; height:36px; margin-bottom:5px; align-items:flex-end; }
+  .pass-v2-bclines span { background:#fff; border-radius:1px; flex-shrink:0; }
+  .pass-v2-bcnum  { font-family:'Rajdhani',sans-serif; font-size:12px; color:rgba(255,255,255,.4); letter-spacing:2px; text-align:center; }
+  .pass-v2-footer { background:rgba(0,0,0,.2); padding:10px 22px; display:flex; justify-content:space-between; font-size:10px; color:rgba(255,255,255,.35); letter-spacing:.5px; }
+  .pass-v2-lock   { position:absolute; inset:0; background:rgba(10,22,40,.85); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; z-index:5; backdrop-filter:blur(2px); border-radius:22px; }
+  .pass-v2-lock .lock-icon { font-size:50px; }
+  .pass-v2-lock .lock-msg  { font-size:15px; font-weight:700; color:rgba(255,255,255,.8); text-align:center; padding:0 24px; }
+  .pass-v2-lock .lock-sub  { font-size:12px; color:rgba(255,255,255,.45); text-align:center; padding:0 24px; }
+
+  .fees-status-alert { display:flex; align-items:center; gap:10px; padding:14px 18px; border-radius:12px; font-size:14px; font-weight:700; margin-bottom:18px; border:1px solid; }
+  .fees-status-alert.paid    { background:#d4edda; color:#155724; border-color:#a8d5b5; }
+  .fees-status-alert.pending { background:#fff3cd; color:#856404; border-color:#f5d876; }
+  .fees-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .fees-dot.paid    { background:var(--success); }
+  .fees-dot.pending { background:var(--warning); }
+
+  .s-stop-group { background:#fff; border-radius:14px; border:1px solid var(--border); margin-bottom:18px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.04); }
+  .s-stop-header { background:linear-gradient(135deg,var(--college-navy),var(--college-blue)); padding:13px 18px; display:flex; align-items:center; gap:10px; }
+  .s-stop-header .s-stop-name  { font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700; color:#fff; }
+  .s-stop-header .s-stop-count { margin-left:auto; background:rgba(245,166,35,.25); color:var(--college-gold); border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; }
+  .you-chip { background:#e8f0fe; color:var(--college-blue); border-radius:8px; padding:1px 7px; font-size:10px; font-weight:700; margin-left:6px; display:inline-block; }
+
+  .nav-section-title { font-size:10px; font-weight:700; color:rgba(255,255,255,.32); text-transform:uppercase; letter-spacing:2px; padding:8px 8px 5px; }
+
+  .profile-field-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .pf-block { background:var(--light-bg); border-radius:12px; padding:13px 15px; }
+  .pf-lbl   { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:4px; font-weight:700; }
+  .pf-val   { font-size:14px; font-weight:700; color:var(--text-dark); }
+
+  .quick-actions { display:flex; gap:12px; flex-wrap:wrap; }
+
+</style>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash">
+  <!-- Floating particles -->
+  <div class="splash-particle" style="width:8px;height:8px;background:#f5a623;left:10%;top:30%;animation-delay:0s;animation-duration:3.5s;"></div>
+  <div class="splash-particle" style="width:5px;height:5px;background:#e8870a;left:80%;top:50%;animation-delay:1s;animation-duration:2.8s;"></div>
+  <div class="splash-particle" style="width:10px;height:10px;background:rgba(245,166,35,0.4);left:50%;top:60%;animation-delay:0.5s;animation-duration:4s;"></div>
+  <div class="splash-particle" style="width:6px;height:6px;background:#f5a623;left:25%;top:70%;animation-delay:1.5s;animation-duration:3s;"></div>
+  <div class="splash-particle" style="width:7px;height:7px;background:#e8870a;left:70%;top:35%;animation-delay:2s;animation-duration:3.2s;"></div>
+
+  <div class="splash-road">
+    <div class="road-line"></div>
+    <div class="road-line"></div>
+    <div class="road-line"></div>
+    <div class="road-line"></div>
+  </div>
+
+  <!-- Bus SVG with animated wheels + exhaust -->
+  <div class="splash-bus-bob" style="position:relative;">
+    <!-- Exhaust puffs (left of bus) -->
+    <svg style="position:absolute;left:-30px;top:30px;" width="40" height="40" viewbox="0 0 40 40">
+      <circle class="puff" cx="30" cy="30" r="6" fill="rgba(180,180,180,0.5)"/>
+      <circle class="puff" cx="20" cy="25" r="4" fill="rgba(160,160,160,0.4)"/>
+      <circle class="puff" cx="10" cy="20" r="3" fill="rgba(140,140,140,0.3)"/>
+    </svg>
+    <svg width="340" height="110" viewbox="0 0 340 110">
+      <!-- Shadow -->
+      <ellipse cx="165" cy="106" rx="140" ry="6" fill="rgba(0,0,0,0.35)"/>
+      <!-- Bus body -->
+      <rect x="10" y="15" width="300" height="68" rx="12" fill="#1a3a6b"/>
+      <rect x="10" y="15" width="300" height="26" rx="12" fill="#0d2040"/>
+      <!-- Windows row -->
+      <rect x="28" y="22" width="42" height="22" rx="5" fill="#7ec8f5" opacity="0.92"/>
+      <rect x="80" y="22" width="42" height="22" rx="5" fill="#7ec8f5" opacity="0.92"/>
+      <rect x="132" y="22" width="42" height="22" rx="5" fill="#7ec8f5" opacity="0.92"/>
+      <rect x="184" y="22" width="42" height="22" rx="5" fill="#7ec8f5" opacity="0.92"/>
+      <rect x="236" y="22" width="42" height="22" rx="5" fill="#ffe8a0" opacity="0.92"/>
+      <!-- Window glare -->
+      <rect x="29" y="23" width="12" height="6" rx="2" fill="white" opacity="0.3"/>
+      <rect x="81" y="23" width="12" height="6" rx="2" fill="white" opacity="0.3"/>
+      <rect x="133" y="23" width="12" height="6" rx="2" fill="white" opacity="0.3"/>
+      <rect x="185" y="23" width="12" height="6" rx="2" fill="white" opacity="0.3"/>
+      <!-- Gold stripe -->
+      <rect x="10" y="56" width="300" height="7" fill="#f5a623"/>
+      <!-- Sub-stripe -->
+      <rect x="10" y="63" width="300" height="3" fill="#e8870a" opacity="0.6"/>
+      <!-- UITTC text on body -->
+      <text x="145" y="82" font-family="Orbitron,monospace" font-size="15" font-weight="900" fill="#f5a623" text-anchor="middle" letter-spacing="4">UITTC</text>
+      <!-- Headlight glow -->
+      <rect x="296" y="28" width="18" height="14" rx="4" fill="#fffde0"/>
+      <rect x="302" y="42" width="10" height="6" rx="2" fill="#fffde0" opacity="0.7"/>
+      <!-- Front panel -->
+      <rect x="304" y="15" width="6" height="68" rx="3" fill="#071020"/>
+      <!-- Door lines -->
+      <rect x="62" y="48" width="2" height="30" rx="1" fill="rgba(255,255,255,0.15)"/>
+      <!-- Wheel arches -->
+      <rect x="42" y="72" width="56" height="10" rx="5" fill="#0a1628"/>
+      <rect x="218" y="72" width="56" height="10" rx="5" fill="#0a1628"/>
+      <!-- Wheels with spokes (animated via JS transform-origin) -->
+      <!-- Rear wheel -->
+      <g class="splash-wheel">
+        <circle cx="70" cy="90" r="18" fill="#1a1a2e"/>
+        <circle cx="70" cy="90" r="14" fill="#2c2c44"/>
+        <circle cx="70" cy="90" r="6" fill="#888"/>
+        <line x1="70" y1="76" x2="70" y2="104" stroke="#555" stroke-width="2.5"/>
+        <line x1="56" y1="90" x2="84" y2="90" stroke="#555" stroke-width="2.5"/>
+        <line x1="60" y1="80" x2="80" y2="100" stroke="#555" stroke-width="2"/>
+        <line x1="80" y1="80" x2="60" y2="100" stroke="#555" stroke-width="2"/>
+        <circle cx="70" cy="90" r="4" fill="#f5a623"/>
+      </g>
+      <!-- Front wheel -->
+      <g class="splash-wheel">
+        <circle cx="246" cy="90" r="18" fill="#1a1a2e"/>
+        <circle cx="246" cy="90" r="14" fill="#2c2c44"/>
+        <circle cx="246" cy="90" r="6" fill="#888"/>
+        <line x1="246" y1="76" x2="246" y2="104" stroke="#555" stroke-width="2.5"/>
+        <line x1="232" y1="90" x2="260" y2="90" stroke="#555" stroke-width="2.5"/>
+        <line x1="236" y1="80" x2="256" y2="100" stroke="#555" stroke-width="2"/>
+        <line x1="256" y1="80" x2="236" y2="100" stroke="#555" stroke-width="2"/>
+        <circle cx="246" cy="90" r="4" fill="#f5a623"/>
+      </g>
+      <!-- Exhaust pipe -->
+      <rect x="10" y="72" width="14" height="5" rx="2" fill="#555"/>
+    </svg>
+  </div>
+
+  <div class="splash-logo-area">
+    <div class="splash-uittc">UITTC</div>
+    <div class="splash-college-name">Unnamalai Institute of Technology</div>
+    <div class="splash-tagline">Transport Corporation</div>
+  </div>
+
+  <div class="splash-loader">
+    <div class="splash-loader-bar"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notification" id="notification">✓ Action completed successfully</div>
+
+<!-- MODAL OVERLAY -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-content">
+    <!-- dynamic -->
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- LOGIN PAGE -->
+  <div id="login-page">
+    <div class="login-bg-pattern"></div>
+
+    <!-- Animated bus lane at bottom of login page -->
+    <div class="login-bus-lane">
+      <div class="login-road-surface"></div>
+      <div class="login-road-line"></div>
+      <div class="login-road-line"></div>
+      <div class="login-road-line"></div>
+      <div class="login-road-line"></div>
+      <div class="login-animated-bus">
+        <svg width="140" height="46" viewbox="0 0 140 46">
+          <ellipse cx="68" cy="44" rx="58" ry="3" fill="rgba(0,0,0,0.3)"/>
+          <rect x="4" y="4" width="126" height="34" rx="7" fill="#1a3a6b"/>
+          <rect x="4" y="4" width="126" height="13" rx="7" fill="#0d2040"/>
+          <rect x="12" y="7" width="20" height="10" rx="3" fill="#7ec8f5" opacity="0.9"/>
+          <rect x="36" y="7" width="20" height="10" rx="3" fill="#7ec8f5" opacity="0.9"/>
+          <rect x="60" y="7" width="20" height="10" rx="3" fill="#7ec8f5" opacity="0.9"/>
+          <rect x="84" y="7" width="20" height="10" rx="3" fill="#7ec8f5" opacity="0.9"/>
+          <rect x="108" y="7" width="16" height="10" rx="3" fill="#ffe8a0" opacity="0.9"/>
+          <rect x="4" y="22" width="126" height="4" fill="#f5a623"/>
+          <text x="64" y="36" font-family="Orbitron,monospace" font-size="7" font-weight="900" fill="#f5a623" text-anchor="middle" letter-spacing="2">UITTC</text>
+          <rect x="124" y="8" width="8" height="8" rx="2" fill="#fffde0"/>
+          <!-- Rear wheel -->
+          <g class="lbus-wheel">
+            <circle cx="26" cy="40" r="8" fill="#111"/>
+            <circle cx="26" cy="40" r="5" fill="#333"/>
+            <circle cx="26" cy="40" r="2" fill="#f5a623"/>
+            <line x1="26" y1="32" x2="26" y2="48" stroke="#555" stroke-width="1.5"/>
+            <line x1="18" y1="40" x2="34" y2="40" stroke="#555" stroke-width="1.5"/>
+          </g>
+          <!-- Front wheel -->
+          <g class="lbus-wheel">
+            <circle cx="104" cy="40" r="8" fill="#111"/>
+            <circle cx="104" cy="40" r="5" fill="#333"/>
+            <circle cx="104" cy="40" r="2" fill="#f5a623"/>
+            <line x1="104" y1="32" x2="104" y2="48" stroke="#555" stroke-width="1.5"/>
+            <line x1="96" y1="40" x2="112" y2="40" stroke="#555" stroke-width="1.5"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo-row">
+          <div class="uittc-badge">
+            <svg width="28" height="28" viewbox="0 0 28 28">
+              <!-- mini bus icon -->
+              <rect x="2" y="8" width="22" height="14" rx="3" fill="#f5a623"/>
+              <rect x="2" y="8" width="22" height="7" rx="3" fill="#e8870a"/>
+              <rect x="5" y="10" width="7" height="5" rx="1" fill="#fff" opacity="0.9"/>
+              <rect x="14" y="10" width="7" height="5" rx="1" fill="#fff" opacity="0.9"/>
+              <rect x="2" y="14" width="22" height="2" fill="#fff" opacity="0.3"/>
+              <circle cx="7" cy="23" r="3" fill="#333"/>
+              <circle cx="7" cy="23" r="1.5" fill="#888"/>
+              <circle cx="20" cy="23" r="3" fill="#333"/>
+              <circle cx="20" cy="23" r="1.5" fill="#888"/>
+            </svg>
+            <div class="uittc-text">UITTC</div>
+          </div>
+        </div>
+        <div class="login-page-title">Unnamalai Institute of Technology<br>Transport Corporation</div>
+        <div class="login-page-subtitle">Bus Pass Management System</div>
+      </div>
+
+      <div class="login-tabs">
+        <button class="login-tab active" onclick="switchLoginTab('student')">🎓 Student</button>
+        <button class="login-tab" onclick="switchLoginTab('admin')">🔐 Admin</button>
+      </div>
+
+      <!-- Student Login -->
+      <div id="student-login-form">
+        <div class="highlight-box">
+          Login using your Register Number and Date of Birth
+        </div>
+        <div class="form-group">
+          <label class="form-label">Register Number</label>
+          <input class="form-input" type="text" placeholder="e.g. 22CS001" id="s-regnum"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth</label>
+          <input class="form-input" type="date" id="s-dob"/>
+        </div>
+        <button class="btn-login" onclick="studentLogin()">Login to Student Portal</button>
+        <div class="login-hint">Demo: Reg <span>22CS001</span> / DOB <span>2003-06-15</span></div>
+      </div>
+
+      <!-- Admin Login -->
+      <div id="admin-login-form" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Admin Username</label>
+          <input class="form-input" type="text" placeholder="admin" id="a-user"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" placeholder="••••••••" id="a-pass"/>
+        </div>
+        <button class="btn-login" onclick="adminLogin()">Login to Admin Panel</button>
+        <div class="login-hint">Demo: <span>admin</span> / <span>uittc2024</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div id="admin-dashboard" style="display:none;">
+    <div class="marquee-bar">
+      <div class="marquee-inner">🚌 Welcome to UITTC - Unnamalai Institute of Technology Transport Corporation &nbsp;&nbsp;&nbsp; 📢 Bus fees for Semester 2 are now open &nbsp;&nbsp;&nbsp; ✅ Pay on time to avoid late fees &nbsp;&nbsp;&nbsp; 🚌 UITTC - Safe & Reliable Transport</div>
+    </div>
+    <div class="app-layout">
+      <div class="sidebar">
+        <div class="sidebar-logo">
+          <!-- Animated mini bus in sidebar -->
+          <div style="display:flex;justify-content:center;margin-bottom:8px;">
+            <div class="sidebar-bus-icon">
+              <svg width="70" height="28" viewbox="0 0 70 28">
+                <rect x="1" y="1" width="62" height="20" rx="5" fill="#1a3a6b"/>
+                <rect x="1" y="1" width="62" height="9" rx="5" fill="#0d2040"/>
+                <rect x="5" y="3" width="11" height="6" rx="2" fill="#7ec8f5" opacity="0.9"/>
+                <rect x="19" y="3" width="11" height="6" rx="2" fill="#7ec8f5" opacity="0.9"/>
+                <rect x="33" y="3" width="11" height="6" rx="2" fill="#7ec8f5" opacity="0.9"/>
+                <rect x="47" y="3" width="10" height="6" rx="2" fill="#ffe8a0" opacity="0.9"/>
+                <rect x="1" y="13" width="62" height="4" fill="#f5a623"/>
+                <rect x="59" y="3" width="6" height="5" rx="1" fill="#fffde0"/>
+                <circle cx="14" cy="25" r="4" fill="#222"/>
+                <circle cx="14" cy="25" r="2" fill="#555"/>
+                <circle cx="14" cy="25" r="1" fill="#f5a623"/>
+                <circle cx="50" cy="25" r="4" fill="#222"/>
+                <circle cx="50" cy="25" r="2" fill="#555"/>
+                <circle cx="50" cy="25" r="1" fill="#f5a623"/>
+              </svg>
+            </div>
+          </div>
+          <div class="sidebar-uittc">UITTC</div>
+          <div class="sidebar-fullname">Unnamalai Institute of Technology<br>Transport Corporation</div>
+        </div>
+        <div class="sidebar-user">
+          <div class="user-avatar">AD</div>
+          <div class="user-info">
+            <div class="user-name">Admin</div>
+            <div class="user-role">Administrator</div>
+          </div>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-section-title">Overview</div>
+          <button class="nav-item active" onclick="showAdminPage('dashboard', this)">
+            <span class="nav-icon">🏠</span> Dashboard
+          </button>
+          <div class="nav-section-title" style="margin-top:12px;">Management</div>
+          <button class="nav-item" onclick="showAdminPage('students', this)">
+            <span class="nav-icon">👥</span> Students
+          </button>
+          <button class="nav-item" onclick="showAdminPage('fees', this)">
+            <span class="nav-icon">💰</span> Fees Management
+          </button>
+          <button class="nav-item" onclick="showAdminPage('bus-stops', this)">
+            <span class="nav-icon">🚏</span> Bus Stop Wise List
+          </button>
+          <button class="nav-item" onclick="showAdminPage('notifications', this)">
+            <span class="nav-icon">📧</span> Send Notifications
+          </button>
+          <div class="nav-section-title" style="margin-top:12px;">Reports</div>
+          <button class="nav-item" onclick="showAdminPage('paid-list', this)">
+            <span class="nav-icon">✅</span> Paid Students
+          </button>
+          <button class="nav-item" onclick="showAdminPage('pending-list', this)">
+            <span class="nav-icon">⚠️</span> Pending Students
+          </button>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="btn-logout" onclick="logout()">⬅️ Logout</button>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div class="topbar">
+          <div>
+            <div class="topbar-title" id="admin-page-title">Dashboard</div>
+            <div class="topbar-breadcrumb">UITTC Admin Panel</div>
+          </div>
+          <div class="topbar-right">
+            <span class="topbar-badge">AY 2024–25</span>
+            <!-- Mini animated bus in topbar -->
+            <div class="topbar-bus-lane" title="UITTC on the move!">
+              <div class="topbar-bus-anim">
+                <svg width="50" height="20" viewbox="0 0 50 20">
+                  <rect x="1" y="1" width="44" height="14" rx="4" fill="#1a3a6b"/>
+                  <rect x="1" y="1" width="44" height="6" rx="4" fill="#0d2040"/>
+                  <rect x="4" y="2" width="8" height="4" rx="1" fill="#7ec8f5" opacity="0.9"/>
+                  <rect x="14" y="2" width="8" height="4" rx="1" fill="#7ec8f5" opacity="0.9"/>
+                  <rect x="24" y="2" width="8" height="4" rx="1" fill="#7ec8f5" opacity="0.9"/>
+                  <rect x="34" y="2" width="8" height="4" rx="1" fill="#ffe8a0" opacity="0.9"/>
+                  <rect x="1" y="9" width="44" height="3" fill="#f5a623"/>
+                  <rect x="42" y="3" width="5" height="4" rx="1" fill="#fffde0"/>
+                  <g class="tb-wheel"><circle cx="10" cy="18" r="4" fill="#111"/><circle cx="10" cy="18" r="2" fill="#444"/><circle cx="10" cy="18" r="1" fill="#f5a623"/><line x1="10" y1="14" x2="10" y2="22" stroke="#666" stroke-width="1"/><line x1="6" y1="18" x2="14" y2="18" stroke="#666" stroke-width="1"/></g>
+                  <g class="tb-wheel"><circle cx="38" cy="18" r="4" fill="#111"/><circle cx="38" cy="18" r="2" fill="#444"/><circle cx="38" cy="18" r="1" fill="#f5a623"/><line x1="38" y1="14" x2="38" y2="22" stroke="#666" stroke-width="1"/><line x1="34" y1="18" x2="42" y2="18" stroke="#666" stroke-width="1"/></g>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-content">
+
+          <!-- DASHBOARD PAGE -->
+          <div class="page-section active" id="page-dashboard">
+            <div class="welcome-banner">
+              <!-- Road strip -->
+              <div class="banner-road">
+                <div class="banner-road-dashes">
+                  <div class="banner-road-dash"></div><div class="banner-road-dash"></div>
+                  <div class="banner-road-dash"></div><div class="banner-road-dash"></div>
+                  <div class="banner-road-dash"></div><div class="banner-road-dash"></div>
+                  <div class="banner-road-dash"></div><div class="banner-road-dash"></div>
+                  <div class="banner-road-dash"></div><div class="banner-road-dash"></div>
+                </div>
+              </div>
+              <!-- Animated bus sliding across banner -->
+              <div class="banner-bus-slide">
+                <svg width="110" height="38" viewbox="0 0 110 38">
+                  <rect x="2" y="2" width="98" height="28" rx="6" fill="rgba(255,255,255,0.15)"/>
+                  <rect x="2" y="2" width="98" height="11" rx="6" fill="rgba(0,0,0,0.2)"/>
+                  <rect x="8" y="4" width="16" height="8" rx="2" fill="rgba(126,200,245,0.7)"/>
+                  <rect x="28" y="4" width="16" height="8" rx="2" fill="rgba(126,200,245,0.7)"/>
+                  <rect x="48" y="4" width="16" height="8" rx="2" fill="rgba(126,200,245,0.7)"/>
+                  <rect x="68" y="4" width="16" height="8" rx="2" fill="rgba(255,232,160,0.7)"/>
+                  <rect x="2" y="17" width="98" height="4" fill="rgba(245,166,35,0.8)"/>
+                  <rect x="95" y="5" width="8" height="7" rx="2" fill="rgba(255,253,224,0.9)"/>
+                  <g class="bb-wheel"><circle cx="20" cy="33" r="6" fill="rgba(0,0,0,0.6)"/><circle cx="20" cy="33" r="3" fill="rgba(136,136,136,0.8)"/><circle cx="20" cy="33" r="1.5" fill="#f5a623"/><line x1="20" y1="27" x2="20" y2="39" stroke="rgba(85,85,85,0.6)" stroke-width="1.5"/><line x1="14" y1="33" x2="26" y2="33" stroke="rgba(85,85,85,0.6)" stroke-width="1.5"/></g>
+                  <g class="bb-wheel"><circle cx="82" cy="33" r="6" fill="rgba(0,0,0,0.6)"/><circle cx="82" cy="33" r="3" fill="rgba(136,136,136,0.8)"/><circle cx="82" cy="33" r="1.5" fill="#f5a623"/><line x1="82" y1="27" x2="82" y2="39" stroke="rgba(85,85,85,0.6)" stroke-width="1.5"/><line x1="76" y1="33" x2="88" y2="33" stroke="rgba(85,85,85,0.6)" stroke-width="1.5"/></g>
+                </svg>
+              </div>
+              <div class="welcome-text">
+                <h2>Welcome, Administrator 👋</h2>
+                <p>Manage students, fees, and bus passes from this panel</p>
+              </div>
+              <div class="welcome-badge">🚌 Sem 2 Active</div>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon blue">🎓</div>
+                <div class="stat-number">248</div>
+                <div class="stat-label">Total Students</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div class="stat-number">186</div>
+                <div class="stat-label">Fees Paid</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon gold">⚠️</div>
+                <div class="stat-number">62</div>
+                <div class="stat-label">Fees Pending</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon red">🚌</div>
+                <div class="stat-number">8</div>
+                <div class="stat-label">Bus Stops</div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+              <div class="section-card">
+                <div class="section-card-header">
+                  <div class="section-card-title">Recent Activity</div>
+                </div>
+                <div class="payment-timeline">
+                  <div class="timeline-item"><div class="timeline-dot paid"></div><div class="timeline-content"><div class="timeline-title">22CS001 - Arun Kumar paid fees</div><div class="timeline-subtitle">Today, 10:32 AM · ₹4,500</div></div></div>
+                  <div class="timeline-item"><div class="timeline-dot paid"></div><div class="timeline-content"><div class="timeline-title">21ME045 - Priya S. paid fees</div><div class="timeline-subtitle">Today, 9:18 AM · ₹4,500</div></div></div>
+                  <div class="timeline-item"><div class="timeline-dot pending"></div><div class="timeline-content"><div class="timeline-title">Reminder sent to 14 students</div><div class="timeline-subtitle">Yesterday · Pending fees reminder</div></div></div>
+                  <div class="timeline-item"><div class="timeline-dot paid"></div><div class="timeline-content"><div class="timeline-title">22EE012 - Ravi M. paid fees</div><div class="timeline-subtitle">Yesterday, 4:45 PM · ₹4,500</div></div></div>
+                </div>
+              </div>
+              <div class="section-card">
+                <div class="section-card-header">
+                  <div class="section-card-title">Bus Stop Summary</div>
+                </div>
+                <table class="data-table">
+                  <thead><tr><th>Bus Stop</th><th>Students</th><th>Paid</th></tr></thead>
+                  <tbody id="stop-summary-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- STUDENTS PAGE -->
+          <div class="page-section" id="page-students">
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">All Students</div>
+                <button class="btn btn-primary" onclick="openAddStudentModal()">+ Add Student</button>
+              </div>
+              <div class="search-bar">
+                <input class="search-input" type="text" placeholder="Search by name or register number..." oninput="filterStudents(this.value)"/>
+                <select class="filter-select" onchange="filterByStop(this.value)">
+                  <option value="">All Bus Stops</option>
+                  <option>Kovilpatti</option>
+                  <option>Sivakasi</option>
+                  <option>Virudhunagar</option>
+                  <option>Sattur</option>
+                  <option>Aruppukottai</option>
+                  <option>Rajapalayam</option>
+                  <option>Sankarankovil</option>
+                  <option>Tenkasi</option>
+                </select>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Photo</th>
+                    <th>Reg No.</th>
+                    <th>Name</th>
+                    <th>Year/Sem</th>
+                    <th>Bus Stop</th>
+                    <th>Fees Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="students-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- FEES MANAGEMENT PAGE -->
+          <div class="page-section" id="page-fees">
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">Fees Management</div>
+                <div style="display:flex;gap:10px;">
+                  <button class="btn btn-warning" onclick="sendReminderAll()">📧 Send Reminders</button>
+                </div>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Reg No.</th>
+                    <th>Name</th>
+                    <th>Bus Stop</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Update</th>
+                  </tr>
+                </thead>
+                <tbody id="fees-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- BUS STOP WISE PAGE -->
+          <div class="page-section" id="page-bus-stops">
+            <div id="bus-stop-list"></div>
+          </div>
+
+          <!-- NOTIFICATIONS PAGE -->
+          <div class="page-section" id="page-notifications">
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">Send Notifications to Students</div>
+              </div>
+              <div class="form-row">
+                <div>
+                  <label class="form-label">Recipient Group</label>
+                  <select class="form-select">
+                    <option>All Students</option>
+                    <option>Fees Pending Students</option>
+                    <option>Specific Bus Stop</option>
+                    <option>Specific Year</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label">Notification Type</label>
+                  <select class="form-select">
+                    <option>Fees Reminder</option>
+                    <option>Payment Confirmation</option>
+                    <option>Pass Ready</option>
+                    <option>General Announcement</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group-full">
+                <label class="form-label">Message</label>
+                <textarea class="form-input" rows="5" placeholder="Type your notification message here...
+Example: Dear Student, Your bus fees for Semester 2 (2024-25) of ₹4,500 is pending. Please pay before 15th Jan 2025 to avoid penalty."></textarea>
+              </div>
+              <div style="margin-top:16px; display:flex; gap:12px;">
+                <button class="btn btn-primary" onclick="showNotif('✉️ Notification sent to all pending students!')">📧 Send Email</button>
+                <button class="btn btn-success" onclick="showNotif('📱 SMS sent successfully!')">📱 Send SMS</button>
+              </div>
+
+              <div style="margin-top:28px; padding-top:20px; border-top:2px solid var(--light-bg);">
+                <div class="section-card-title" style="margin-bottom:16px;">Email Log</div>
+                <table class="data-table">
+                  <thead><tr><th>Date</th><th>Recipients</th><th>Type</th><th>Status</th></tr></thead>
+                  <tbody>
+                    <tr><td>29 Apr 2025</td><td>62 students</td><td>Fees Reminder</td><td><span class="badge badge-success">Sent</span></td></tr>
+                    <tr><td>28 Apr 2025</td><td>Arun Kumar</td><td>Payment Confirm</td><td><span class="badge badge-success">Sent</span></td></tr>
+                    <tr><td>27 Apr 2025</td><td>All Students</td><td>General Notice</td><td><span class="badge badge-success">Sent</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- PAID LIST PAGE -->
+          <div class="page-section" id="page-paid-list">
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">Paid Students (Bus Stop Wise)</div>
+                <button class="btn btn-success" onclick="showNotif('📄 Report exported!')">⬇️ Export</button>
+              </div>
+              <div id="paid-bus-stop-list"></div>
+            </div>
+          </div>
+
+          <!-- PENDING LIST PAGE -->
+          <div class="page-section" id="page-pending-list">
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">Pending Students (Bus Stop Wise)</div>
+                <button class="btn btn-warning" onclick="sendReminderAll()">📧 Send All Reminders</button>
+              </div>
+              <div id="pending-bus-stop-list"></div>
+            </div>
+          </div>
+
+        </div><!-- end page-content -->
+      </div><!-- end main-content -->
+    </div><!-- end app-layout -->
+  </div><!-- end admin-dashboard -->
+
+  <!-- STUDENT DASHBOARD -->
+  <div id="student-dashboard" style="display:none;">
+    <div class="marquee-bar">
+      <div class="marquee-inner">🚌 Welcome to UITTC Student Portal &nbsp;&nbsp;&nbsp; 📢 Download your Bus Pass after fee confirmation by Admin &nbsp;&nbsp;&nbsp; ✅ Safe &amp; Reliable Transport &nbsp;&nbsp;&nbsp; 🚌 Unnamalai Institute of Technology Transport Corporation</div>
+    </div>
+    <div class="app-layout">
+      <div class="sidebar">
+        <div class="sidebar-logo">
+          <div style="display:flex;justify-content:center;margin-bottom:8px;">
+            <div class="sidebar-bus-icon">
+              <svg width="70" height="28" viewbox="0 0 70 28">
+                <rect x="1" y="1" width="62" height="20" rx="5" fill="#1a3a6b"/>
+                <rect x="1" y="1" width="62" height="9" rx="5" fill="#0d2040"/>
+                <rect x="5" y="3" width="11" height="6" rx="2" fill="#7ec8f5" opacity="0.9"/>
+                <rect x="19" y="3" width="11" height="6" rx="2" fill="#7ec8f5" opacity="0.9"/>
+                <rect x="33" y="3" width="11" height="6" rx="2" fill="#7ec8f5" opacity="0.9"/>
+                <rect x="47" y="3" width="10" height="6" rx="2" fill="#ffe8a0" opacity="0.9"/>
+                <rect x="1" y="13" width="62" height="4" fill="#f5a623"/>
+                <rect x="59" y="3" width="6" height="5" rx="1" fill="#fffde0"/>
+                <circle cx="14" cy="25" r="4" fill="#222"/><circle cx="14" cy="25" r="2" fill="#555"/><circle cx="14" cy="25" r="1" fill="#f5a623"/>
+                <circle cx="50" cy="25" r="4" fill="#222"/><circle cx="50" cy="25" r="2" fill="#555"/><circle cx="50" cy="25" r="1" fill="#f5a623"/>
+              </svg>
+            </div>
+          </div>
+          <div class="sidebar-uittc">UITTC</div>
+          <div class="sidebar-fullname">Student Portal</div>
+        </div>
+        <div class="sidebar-user">
+          <div class="user-avatar" id="student-avatar-sidebar">AK</div>
+          <div class="user-info">
+            <div class="user-name" id="student-name-sidebar">Student</div>
+            <div class="user-role" id="student-role-sidebar">🎓 Student</div>
+          </div>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-section-title">Navigation</div>
+          <button class="nav-item active" onclick="showStudentPage('s-dashboard', this)"><span class="nav-icon">🏠</span> My Dashboard</button>
+          <button class="nav-item" onclick="showStudentPage('s-pass', this)"><span class="nav-icon">🎫</span> My Bus Pass</button>
+          <button class="nav-item" onclick="showStudentPage('s-fees', this)"><span class="nav-icon">💳</span> Fees Status</button>
+          <div class="nav-section-title" style="margin-top:10px;">Bus Stop Info</div>
+          <button class="nav-item" onclick="showStudentPage('s-stoplist', this)"><span class="nav-icon">🚏</span> Paid Students (Stop Wise)</button>
+          <div class="nav-section-title" style="margin-top:10px;">Account</div>
+          <button class="nav-item" onclick="showStudentPage('s-profile', this)"><span class="nav-icon">👤</span> My Profile</button>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="btn-logout" onclick="logout()">⬅️ Logout</button>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div class="topbar">
+          <div>
+            <div class="topbar-title" id="student-page-title">My Dashboard</div>
+            <div class="topbar-breadcrumb">UITTC Student Portal</div>
+          </div>
+          <div class="topbar-right">
+            <span class="topbar-badge" id="student-regnum-badge">22CS001</span>
+            <span class="topbar-badge" id="student-fees-badge" style="background:#d4edda;color:#155724;">✅ Paid</span>
+            <div class="topbar-bus-lane" title="UITTC on the move!">
+              <div class="topbar-bus-anim">
+                <svg width="50" height="20" viewbox="0 0 50 20">
+                  <rect x="1" y="1" width="44" height="14" rx="4" fill="#1a3a6b"/>
+                  <rect x="1" y="1" width="44" height="6" rx="4" fill="#0d2040"/>
+                  <rect x="4" y="2" width="8" height="4" rx="1" fill="#7ec8f5" opacity="0.9"/>
+                  <rect x="14" y="2" width="8" height="4" rx="1" fill="#7ec8f5" opacity="0.9"/>
+                  <rect x="24" y="2" width="8" height="4" rx="1" fill="#7ec8f5" opacity="0.9"/>
+                  <rect x="34" y="2" width="8" height="4" rx="1" fill="#ffe8a0" opacity="0.9"/>
+                  <rect x="1" y="9" width="44" height="3" fill="#f5a623"/>
+                  <rect x="42" y="3" width="5" height="4" rx="1" fill="#fffde0"/>
+                  <g class="tb-wheel"><circle cx="10" cy="18" r="4" fill="#111"/><circle cx="10" cy="18" r="2" fill="#444"/><circle cx="10" cy="18" r="1" fill="#f5a623"/><line x1="10" y1="14" x2="10" y2="22" stroke="#666" stroke-width="1"/><line x1="6" y1="18" x2="14" y2="18" stroke="#666" stroke-width="1"/></g>
+                  <g class="tb-wheel"><circle cx="38" cy="18" r="4" fill="#111"/><circle cx="38" cy="18" r="2" fill="#444"/><circle cx="38" cy="18" r="1" fill="#f5a623"/><line x1="38" y1="14" x2="38" y2="22" stroke="#666" stroke-width="1"/><line x1="34" y1="18" x2="42" y2="18" stroke="#666" stroke-width="1"/></g>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-content">
+
+          <!-- STUDENT HOME DASHBOARD -->
+          <div class="page-section active" id="page-s-dashboard">
+            <div class="welcome-banner">
+              <div class="banner-road">
+                <div class="banner-road-dashes">
+                  <div class="banner-road-dash"></div><div class="banner-road-dash"></div>
+                  <div class="banner-road-dash"></div><div class="banner-road-dash"></div>
+                  <div class="banner-road-dash"></div><div class="banner-road-dash"></div>
+                  <div class="banner-road-dash"></div><div class="banner-road-dash"></div>
+                </div>
+              </div>
+              <div class="banner-bus-slide">
+                <svg width="110" height="38" viewbox="0 0 110 38">
+                  <rect x="2" y="2" width="98" height="28" rx="6" fill="rgba(255,255,255,0.15)"/>
+                  <rect x="2" y="2" width="98" height="11" rx="6" fill="rgba(0,0,0,0.2)"/>
+                  <rect x="8" y="4" width="16" height="8" rx="2" fill="rgba(126,200,245,0.7)"/>
+                  <rect x="28" y="4" width="16" height="8" rx="2" fill="rgba(126,200,245,0.7)"/>
+                  <rect x="48" y="4" width="16" height="8" rx="2" fill="rgba(126,200,245,0.7)"/>
+                  <rect x="68" y="4" width="16" height="8" rx="2" fill="rgba(255,232,160,0.7)"/>
+                  <rect x="2" y="17" width="98" height="4" fill="rgba(245,166,35,0.8)"/>
+                  <rect x="95" y="5" width="8" height="7" rx="2" fill="rgba(255,253,224,0.9)"/>
+                  <g class="bb-wheel"><circle cx="20" cy="33" r="6" fill="rgba(0,0,0,0.6)"/><circle cx="20" cy="33" r="3" fill="rgba(136,136,136,0.8)"/><circle cx="20" cy="33" r="1.5" fill="#f5a623"/><line x1="20" y1="27" x2="20" y2="39" stroke="rgba(85,85,85,0.6)" stroke-width="1.5"/><line x1="14" y1="33" x2="26" y2="33" stroke="rgba(85,85,85,0.6)" stroke-width="1.5"/></g>
+                  <g class="bb-wheel"><circle cx="82" cy="33" r="6" fill="rgba(0,0,0,0.6)"/><circle cx="82" cy="33" r="3" fill="rgba(136,136,136,0.8)"/><circle cx="82" cy="33" r="1.5" fill="#f5a623"/><line x1="82" y1="27" x2="82" y2="39" stroke="rgba(85,85,85,0.6)" stroke-width="1.5"/><line x1="76" y1="33" x2="88" y2="33" stroke="rgba(85,85,85,0.6)" stroke-width="1.5"/></g>
+                </svg>
+              </div>
+              <div class="welcome-text">
+                <h2 id="student-welcome-name">Welcome, Arun Kumar 👋</h2>
+                <p>View your bus pass and payment status here</p>
+              </div>
+              <div class="welcome-badge" id="student-stop-badge">📍 Sivakasi</div>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+              <div class="stat-card">
+                <div class="stat-icon blue">🎫</div>
+                <div class="stat-number" style="font-size:22px;" id="s-pass-status-num">Active</div>
+                <div class="stat-label">Pass Status</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon green">💰</div>
+                <div class="stat-number" style="font-size:22px;" id="s-fees-amount">₹4,500</div>
+                <div class="stat-label">Fees Status</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon gold"><div class="bus-stat-icon">🚌</div></div>
+                <div class="stat-number" style="font-size:22px;" id="s-year-display">II / Sem 2</div>
+                <div class="stat-label">Year / Sem</div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">Payment History</div>
+              </div>
+              <div class="payment-timeline" id="s-payment-timeline">
+                <div class="timeline-item"><div class="timeline-dot paid"></div><div class="timeline-content"><div class="timeline-title">Semester 2 Fees Paid</div><div class="timeline-subtitle">15 Jan 2025 · ₹4,500 · Receipt #UITTC-2025-0186</div></div></div>
+                <div class="timeline-item"><div class="timeline-dot paid"></div><div class="timeline-content"><div class="timeline-title">Semester 1 Fees Paid</div><div class="timeline-subtitle">12 Jul 2024 · ₹4,500 · Receipt #UITTC-2024-0142</div></div></div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-card-header"><div class="section-card-title">Quick Actions</div></div>
+              <div class="quick-actions">
+                <button class="btn btn-gold" onclick="showStudentPage('s-pass', document.querySelectorAll('#student-dashboard .nav-item')[1])">🎫 View &amp; Download Bus Pass</button>
+                <button class="btn btn-primary" onclick="showStudentPage('s-fees', document.querySelectorAll('#student-dashboard .nav-item')[2])">💳 Check Fees Status</button>
+                <button class="btn btn-outline" onclick="showStudentPage('s-stoplist', document.querySelectorAll('#student-dashboard .nav-item')[3])">🚏 Paid Students – Stop Wise</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- BUS PASS PAGE -->
+          <div class="page-section" id="page-s-pass">
+
+            <div class="pass-download-bar unlocked" id="s-pass-download-bar">
+              <div class="pdb-info">
+                <div class="pdb-title">✅ Bus Pass Available – Admin Confirmed Payment</div>
+                <div class="pdb-sub">Your bus pass is active. Download or print a copy below.</div>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn btn-success" onclick="downloadStudentPass()">⬇️ Download Pass</button>
+                <button class="btn btn-outline" onclick="window.print()">🖨️ Print</button>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">My Bus Pass</div>
+                <span id="s-pass-badge" class="badge badge-success">✅ Active – Ready to Download</span>
+              </div>
+              <div class="student-pass-container">
+
+                <div class="bus-pass-v2" id="student-bus-pass">
+
+                  <div class="pass-v2-lock" id="pass-lock-overlay" style="display:none;">
+                    <div class="lock-icon">🔒</div>
+                    <div class="lock-msg">Pass Locked – Pending Admin Approval</div>
+                    <div class="lock-sub">Pay your fees at the Transport Office. Admin will confirm and unlock your pass.</div>
+                  </div>
+
+                  <div class="pass-v2-stripe"></div>
+                  <div class="pass-v2-header">
+                    <div>
+                      <div class="pass-v2-uittc">UITTC</div>
+                      <div class="pass-v2-issuer">Unnamalai Institute of Technology</div>
+                    </div>
+                    <div class="pass-v2-chip" id="pass-valid-chip">2024–2025</div>
+                  </div>
+                  <div class="pass-v2-photo-row">
+                    <div class="pass-v2-photo">🧑‍🎓</div>
+                    <div>
+                      <div class="pass-v2-sname" id="pass-name">Arun Kumar</div>
+                      <div class="pass-v2-sreg"  id="pass-regnum">22CS001</div>
+                      <div class="pass-v2-sdept" id="pass-dept-line">CSE · II Year · Sem 2</div>
+                    </div>
+                  </div>
+                  <div class="pass-v2-stripe" style="height:4px;margin-bottom:14px;"></div>
+                  <div class="pass-v2-fields">
+                    <div class="pass-v2-field">
+                      <div class="pass-v2-label">Bus Stop</div>
+                      <div class="pass-v2-value hi" id="pass-stop">Sivakasi</div>
+                    </div>
+                    <div class="pass-v2-field">
+                      <div class="pass-v2-label">Year / Semester</div>
+                      <div class="pass-v2-value" id="pass-year">II Year / Sem 2</div>
+                    </div>
+                    <div class="pass-v2-field">
+                      <div class="pass-v2-label">Issued On</div>
+                      <div class="pass-v2-value" id="pass-issued">15 Jan 2025</div>
+                    </div>
+                    <div class="pass-v2-field">
+                      <div class="pass-v2-label">Valid Until</div>
+                      <div class="pass-v2-value">May 2025</div>
+                    </div>
+                    <div class="pass-v2-field" style="grid-column:span 2;">
+                      <div class="pass-v2-label">Pass Status</div>
+                      <div class="pass-v2-value hi" id="pass-status-text">ACTIVE</div>
+                    </div>
+                  </div>
+                  <div class="pass-v2-bc">
+                    <div class="pass-v2-bclines" id="barcode-lines"></div>
+                    <div class="pass-v2-bcnum"  id="barcode-num">22CS001-2025-S2</div>
+                  </div>
+                  <div class="pass-v2-footer">
+                    <span>UITTC – Student Bus Pass</span>
+                    <span id="pass-sem-footer">Semester 2 | 2024–25</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- FEES STATUS PAGE -->
+          <div class="page-section" id="page-s-fees">
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">My Fees Status</div>
+              </div>
+              <div class="fees-status-alert paid" id="fees-status-alert">
+                <div class="fees-dot paid"></div>
+                <span>✅ Payment Confirmed by Admin – Bus Pass is Active</span>
+              </div>
+              <table class="data-table">
+                <thead><tr><th>Semester</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Receipt</th></tr></thead>
+                <tbody id="s-fees-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- PAID STUDENTS – BUS STOP WISE PAGE -->
+          <div class="page-section" id="page-s-stoplist">
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">🚏 Paid Students – Bus Stop Wise</div>
+                <div style="font-size:12px;color:var(--text-muted);">Only students with admin-confirmed fees are listed</div>
+              </div>
+              <div id="s-stop-wise-container"></div>
+            </div>
+          </div>
+
+          <!-- PROFILE PAGE -->
+          <div class="page-section" id="page-s-profile">
+            <div class="section-card">
+              <div class="section-card-header">
+                <div class="section-card-title">My Profile</div>
+              </div>
+              <div style="display:grid;grid-template-columns:200px 1fr;gap:32px;align-items:start;">
+                <div style="text-align:center;">
+                  <div style="width:120px;height:140px;border-radius:16px;background:linear-gradient(135deg,#1a3a6b,#00b4d8);display:flex;align-items:center;justify-content:center;font-size:60px;margin:0 auto 12px;">🧑‍🎓</div>
+                  <div style="font-size:12px;color:var(--text-muted);">Student Photo</div>
+                </div>
+                <div class="profile-field-grid" id="s-profile-fields">
+                  <!-- rendered by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- end page-content -->
+      </div><!-- end main-content -->
+    </div><!-- end app-layout -->
+  </div><!-- end student-dashboard -->
+
+</div><!-- end app -->
+
+<script>
+// ===================== DATA =====================
+const students = [
+  { reg:'22CS001', name:'Arun Kumar',     dob:'2003-06-15', stop:'Sivakasi',       year:'II Year', sem:'Sem 2', dept:'CSE', email:'arun.22cs001@unnamalai.edu.in',   paid:true  },
+  { reg:'22CS002', name:'Priya S.',        dob:'2003-08-22', stop:'Sivakasi',       year:'II Year', sem:'Sem 2', dept:'CSE', email:'priya.22cs002@unnamalai.edu.in',  paid:true  },
+  { reg:'21ME045', name:'Ravi M.',         dob:'2002-03-10', stop:'Kovilpatti',     year:'III Year',sem:'Sem 2', dept:'MECH',email:'ravi.21me045@unnamalai.edu.in',   paid:true  },
+  { reg:'22EE012', name:'Deepa R.',        dob:'2003-11-05', stop:'Virudhunagar',   year:'II Year', sem:'Sem 2', dept:'EEE', email:'deepa.22ee012@unnamalai.edu.in',  paid:false },
+  { reg:'21CS033', name:'Karthik B.',      dob:'2002-07-19', stop:'Sattur',         year:'III Year',sem:'Sem 2', dept:'CSE', email:'karthik.21cs033@unnamalai.edu.in',paid:true  },
+  { reg:'23IT011', name:'Sowmiya T.',      dob:'2004-01-30', stop:'Aruppukottai',   year:'I Year',  sem:'Sem 2', dept:'IT',  email:'sowmiya.23it011@unnamalai.edu.in',paid:false },
+  { reg:'21EC020', name:'Murugan P.',      dob:'2002-09-14', stop:'Rajapalayam',    year:'III Year',sem:'Sem 2', dept:'ECE', email:'murugan.21ec020@unnamalai.edu.in',paid:true  },
+  { reg:'22CE007', name:'Lavanya K.',      dob:'2003-04-25', stop:'Sankarankovil',  year:'II Year', sem:'Sem 2', dept:'CIVIL',email:'lavanya.22ce007@unnamalai.edu.in',paid:true  },
+  { reg:'23ME002', name:'Dhinesh S.',      dob:'2004-12-01', stop:'Tenkasi',        year:'I Year',  sem:'Sem 2', dept:'MECH',email:'dhinesh.23me002@unnamalai.edu.in',paid:false },
+  { reg:'22IT005', name:'Nithya A.',       dob:'2003-07-08', stop:'Sivakasi',       year:'II Year', sem:'Sem 2', dept:'IT',  email:'nithya.22it005@unnamalai.edu.in', paid:true  },
+  { reg:'21EE030', name:'Selvi B.',        dob:'2002-05-17', stop:'Kovilpatti',     year:'III Year',sem:'Sem 2', dept:'EEE', email:'selvi.21ee030@unnamalai.edu.in',  paid:false },
+  { reg:'22CS018', name:'Vasanth K.',      dob:'2003-10-12', stop:'Virudhunagar',   year:'II Year', sem:'Sem 2', dept:'CSE', email:'vasanth.22cs018@unnamalai.edu.in',paid:true  },
+];
+
+const stopList = ['Kovilpatti','Sivakasi','Virudhunagar','Sattur','Aruppukottai','Rajapalayam','Sankarankovil','Tenkasi'];
+
+// ===================== LOCALSTORAGE =====================
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem('uittc_students', JSON.stringify(students));
+  } catch(e) {
+    console.error('Error saving to localStorage:', e);
+  }
+}
+
+function loadFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem('uittc_students');
+    if(saved) {
+      const loaded = JSON.parse(saved);
+      students.splice(0, students.length, ...loaded);
+    }
+  } catch(e) {
+    console.error('Error loading from localStorage:', e);
+  }
+}
+
+// ===================== UTILITY FUNCTIONS =====================
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function sanitizeInput(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function exportToCSV() {
+  if(students.length === 0) { showNotif('⚠️ No students to export!', true); return; }
+  let csv = 'Registration No,Name,DOB,Bus Stop,Year,Semester,Department,Email,Fees Status\n';
+  students.forEach(s => {
+    csv += `${s.reg},"${s.name}",${s.dob},"${s.stop}","${s.year}","${s.sem}","${s.dept}","${s.email}",${s.paid?'Paid':'Pending'}\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'UITTC_Students_' + new Date().toISOString().split('T')[0] + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showNotif('✅ Data exported successfully!');
+}
+
+function getStatistics() {
+  const total = students.length;
+  const paid = students.filter(s => s.paid).length;
+  const pending = total - paid;
+  const byStop = {};
+  stopList.forEach(stop => {
+    byStop[stop] = students.filter(s => s.stop === stop).length;
+  });
+  return { total, paid, pending, byStop };
+}
+
+function backupData() {
+  try {
+    const backup = {
+      timestamp: new Date().toISOString(),
+      data: students
+    };
+    localStorage.setItem('uittc_backup_' + Date.now(), JSON.stringify(backup));
+    showNotif('✅ Backup created successfully!');
+  } catch(e) {
+    showNotif('❌ Failed to create backup!', true);
+  }
+}
+
+// ===================== SPLASH =====================
+window.addEventListener('load', () => {
+  loadFromLocalStorage();
+  setTimeout(() => {
+    document.getElementById('splash').style.transition = 'opacity 0.6s ease';
+    document.getElementById('splash').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }, 600);
+  }, 4200);
+});
+
+// ===================== LOGIN =====================
+function switchLoginTab(type) {
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('student-login-form').style.display = type === 'student' ? 'block' : 'none';
+  document.getElementById('admin-login-form').style.display   = type === 'admin'   ? 'block' : 'none';
+}
+
+function adminLogin() {
+  const u = document.getElementById('a-user').value.trim();
+  const p = document.getElementById('a-pass').value.trim();
+  if(!u || !p) { showNotif('⚠️ Please enter username and password!', true); return; }
+  if (u === 'admin' && p === 'uittc2024') {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('admin-dashboard').style.display = 'block';
+    initAdminData();
+    document.getElementById('a-user').value = '';
+    document.getElementById('a-pass').value = '';
+    showNotif('✅ Admin logged in successfully!');
+  } else {
+    showNotif('❌ Invalid credentials!', true);
+  }
+}
+
+function studentLogin() {
+  const reg = document.getElementById('s-regnum').value.trim().toUpperCase();
+  const dob = document.getElementById('s-dob').value;
+  if(!reg || !dob) { showNotif('⚠️ Please enter registration number and date of birth!', true); return; }
+  const student = students.find(s => s.reg === reg && s.dob === dob);
+  if (student) {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('student-dashboard').style.display = 'block';
+    document.getElementById('s-regnum').value = '';
+    document.getElementById('s-dob').value = '';
+    loadStudentDashboard(student);
+    showNotif('✅ Welcome, ' + student.name + '!');
+  } else {
+    showNotif('❌ Invalid Register Number or Date of Birth!', true);
+  }
+}
+
+function loadStudentDashboard(s) {
+  currentStudentReg = s.reg;
+  const initials = s.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('student-name-sidebar').textContent = s.name;
+  document.getElementById('student-avatar-sidebar').textContent = initials;
+  document.getElementById('student-welcome-name').textContent = 'Welcome, ' + s.name + ' 👋';
+  document.getElementById('student-stop-badge').textContent = '📍 ' + s.stop;
+  document.getElementById('student-regnum-badge').textContent = s.reg;
+  document.getElementById('s-year-display').textContent = s.year.replace(' Year','') + ' / ' + s.sem;
+  document.getElementById('s-pass-status-num').textContent = s.paid ? 'Active' : 'Locked';
+  document.getElementById('s-pass-status-num').style.color = s.paid ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('s-fees-amount').textContent = s.paid ? '₹4,500 ✅' : 'Pending ⚠️';
+  document.getElementById('s-fees-amount').style.color = s.paid ? 'var(--success)' : 'var(--warning)';
+
+  const feesBadge = document.getElementById('student-fees-badge');
+  feesBadge.textContent = s.paid ? '✅ Paid' : '⏳ Pending';
+  feesBadge.style.background = s.paid ? '#d4edda' : '#fde8e8';
+  feesBadge.style.color = s.paid ? '#155724' : '#c0392b';
+
+  // Payment timeline
+  document.getElementById('s-payment-timeline').innerHTML = s.paid ? `
+    <div class="timeline-item"><div class="timeline-dot paid"></div><div class="timeline-content"><div class="timeline-title">Semester 2 Fees Paid</div><div class="timeline-subtitle">15 Jan 2025 · ₹4,500 · Receipt #UITTC-2025-0186</div></div></div>
+    <div class="timeline-item"><div class="timeline-dot paid"></div><div class="timeline-content"><div class="timeline-title">Semester 1 Fees Paid</div><div class="timeline-subtitle">12 Jul 2024 · ₹4,500 · Receipt #UITTC-2024-0142</div></div></div>
+  ` : `
+    <div class="timeline-item"><div class="timeline-dot pending"></div><div class="timeline-content"><div class="timeline-title">Semester 2 Fees Payment Pending</div><div class="timeline-subtitle">Due: 15 Jan 2025 · ₹4,500 · Please pay at the Transport Office</div></div></div>
+    <div class="timeline-item"><div class="timeline-dot paid"></div><div class="timeline-content"><div class="timeline-title">Semester 1 Fees Paid</div><div class="timeline-subtitle">12 Jul 2024 · ₹4,500 · Receipt #UITTC-2024-0142</div></div></div>
+  `;
+
+  // ===== Bus Pass =====
+  document.getElementById('pass-name').textContent = s.name;
+  document.getElementById('pass-regnum').textContent = s.reg;
+  document.getElementById('pass-dept-line').textContent = (s.dept||'') + ' · ' + s.year + ' · ' + s.sem;
+  document.getElementById('pass-stop').textContent = s.stop;
+  document.getElementById('pass-year').textContent = s.year + ' / ' + s.sem;
+  document.getElementById('pass-issued').textContent = s.paid ? '15 Jan 2025' : 'Pending';
+  document.getElementById('pass-status-text').textContent = s.paid ? 'ACTIVE' : 'LOCKED';
+  document.getElementById('pass-status-text').style.color = s.paid ? '#6af5a0' : '#ff9999';
+  document.getElementById('pass-sem-footer').textContent = s.sem + ' | 2024–25';
+  document.getElementById('barcode-num').textContent = s.reg + '-2025-S2';
+
+  document.getElementById('pass-lock-overlay').style.display = s.paid ? 'none' : 'flex';
+
+  const dlBar = document.getElementById('s-pass-download-bar');
+  if (s.paid) {
+    dlBar.className = 'pass-download-bar unlocked';
+    dlBar.innerHTML = `<div class="pdb-info"><div class="pdb-title">✅ Bus Pass Available – Admin Confirmed Payment</div><div class="pdb-sub">Your bus pass is active. Download or print a copy below.</div></div>
+      <div style="display:flex;gap:10px;"><button class="btn btn-success" onclick="downloadStudentPass()">⬇️ Download Pass</button><button class="btn btn-outline" onclick="window.print()">🖨️ Print</button></div>`;
+  } else {
+    dlBar.className = 'pass-download-bar locked';
+    dlBar.innerHTML = `<div class="pdb-info"><div class="pdb-title">🔒 Bus Pass Not Available</div><div class="pdb-sub">Your fees payment is pending admin confirmation. Once approved, your pass unlocks here.</div></div>
+      <button class="btn btn-disabled" disabled>⬇️ Download Pass</button>`;
+  }
+  const passBadge = document.getElementById('s-pass-badge');
+  passBadge.className = 'badge ' + (s.paid ? 'badge-success' : 'badge-warning');
+  passBadge.textContent = s.paid ? '✅ Active – Ready to Download' : '⏳ Locked – Awaiting Admin Approval';
+
+  // Barcode bars
+  const bl = document.getElementById('barcode-lines');
+  bl.innerHTML = '';
+  const seed = s.reg.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  for (let i=0;i<60;i++){
+    const sp = document.createElement('span');
+    const w  = ((seed*(i+7)*13) % 3) + 1;
+    const h  = i%5===0 ? 36 : i%3===0 ? 28 : 22;
+    sp.style.width = w+'px'; sp.style.height = h+'px';
+    bl.appendChild(sp);
+  }
+
+  // ===== Fees table =====
+  const alertBox = document.getElementById('fees-status-alert');
+  if (s.paid) {
+    alertBox.className = 'fees-status-alert paid';
+    alertBox.innerHTML = '<div class="fees-dot paid"></div><span>✅ Payment Confirmed by Admin – Bus Pass is Active</span>';
+  } else {
+    alertBox.className = 'fees-status-alert pending';
+    alertBox.innerHTML = '<div class="fees-dot pending"></div><span>⏳ Payment Pending – Please pay at the Transport Office. Admin will update your status.</span>';
+  }
+  document.getElementById('s-fees-tbody').innerHTML = `
+    <tr>
+      <td>Semester 2 (2024–25)</td><td>₹4,500</td><td>15 Jan 2025</td>
+      <td><span class="badge ${s.paid?'badge-success':'badge-warning'}">${s.paid?'Paid':'Pending'}</span></td>
+      <td>${s.paid ? '<button class="btn btn-outline btn-sm" onclick="showNotif(\'📄 Receipt downloaded!\')">⬇️ Receipt</button>' : '<span style="color:var(--text-muted);font-size:12px;">Available after payment</span>'}</td>
+    </tr>
+    <tr>
+      <td>Semester 1 (2024–25)</td><td>₹4,500</td><td>10 Jul 2024</td>
+      <td><span class="badge badge-success">Paid</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick="showNotif('📄 Receipt downloaded!')">⬇️ Receipt</button></td>
+    </tr>
+  `;
+
+  // ===== Bus stop wise paid list =====
+  renderStudentStopWise();
+
+  // ===== Profile =====
+  document.getElementById('s-profile-fields').innerHTML = `
+    <div class="pf-block"><div class="pf-lbl">Full Name</div><div class="pf-val">${s.name}</div></div>
+    <div class="pf-block"><div class="pf-lbl">Register Number</div><div class="pf-val" style="color:var(--college-blue);font-family:'Rajdhani',sans-serif;letter-spacing:1px;">${s.reg}</div></div>
+    <div class="pf-block"><div class="pf-lbl">Date of Birth</div><div class="pf-val">${s.dob}</div></div>
+    <div class="pf-block"><div class="pf-lbl">Department</div><div class="pf-val">${s.dept||'-'}</div></div>
+    <div class="pf-block"><div class="pf-lbl">Year &amp; Semester</div><div class="pf-val">${s.year} / ${s.sem}</div></div>
+    <div class="pf-block"><div class="pf-lbl">Bus Stop</div><div class="pf-val">📍 ${s.stop}</div></div>
+    <div class="pf-block"><div class="pf-lbl">Email</div><div class="pf-val" style="font-size:12px;">${s.email}</div></div>
+    <div class="pf-block"><div class="pf-lbl">Payment / Pass Status</div><div class="pf-val"><span class="badge ${s.paid?'badge-success':'badge-warning'}">${s.paid?'✅ Paid · 🎫 Active':'⏳ Pending · 🔒 Locked'}</span></div></div>
+  `;
+}
+
+let currentStudentReg = null;
+
+function renderStudentStopWise() {
+  const container = document.getElementById('s-stop-wise-container');
+  const paid = students.filter(s => s.paid);
+  let html = '';
+  stopList.forEach(stop => {
+    const list = paid.filter(s => s.stop === stop);
+    if (!list.length) return;
+    html += `
+      <div class="s-stop-group">
+        <div class="s-stop-header">
+          <span style="font-size:16px;">🚏</span>
+          <span class="s-stop-name">${stop}</span>
+          <span class="s-stop-count">${list.length} student${list.length>1?'s':''} paid</span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Reg No.</th><th>Name</th><th>Dept</th><th>Year / Sem</th><th>Status</th></tr></thead>
+          <tbody>
+            ${list.map((s,i)=>`
+              <tr>
+                <td>${i+1}</td>
+                <td><strong>${s.reg}</strong></td>
+                <td>${s.name}${s.reg===currentStudentReg?'<span class="you-chip">You</span>':''}</td>
+                <td><span class="badge badge-info">${s.dept||'-'}</span></td>
+                <td>${s.year} / ${s.sem}</td>
+                <td><span class="badge badge-success">✅ Paid</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
+  container.innerHTML = html || '<div style="text-align:center;padding:40px;color:var(--text-muted);">No paid students found.</div>';
+}
+
+function downloadStudentPass() {
+  try {
+    const s = students.find(x => x.reg === currentStudentReg);
+    if (!s) { showNotif('❌ Student data not found!', true); return; }
+    if (!s.paid) { showNotif('⚠️ Pass not available. Payment pending.', true); return; }
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>UITTC Bus Pass – ${s.reg}</title>
+  <style>body{font-family:Arial,sans-serif;margin:0;padding:40px;background:#f0f4ff;}
+  .pass{width:400px;margin:0 auto;border-radius:20px;overflow:hidden;background:linear-gradient(145deg,#0a1628,#1a3a6b);color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+  .stripe{height:8px;background:repeating-linear-gradient(90deg,#f5a623 0,#f5a623 18px,#e8870a 18px,#e8870a 36px);}
+  .hd{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 10px;}
+  .uittc{font-size:24px;font-weight:900;color:#f5a623;letter-spacing:3px;font-family:'Courier New',monospace;}
+  .chip{background:rgba(245,166,35,.2);border:1px solid rgba(245,166,35,.4);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;color:#f5a623;}
+  .photo-row{display:flex;gap:14px;padding:0 20px 14px;align-items:center;}
+  .avatar{width:70px;height:82px;border-radius:12px;background:rgba(255,255,255,.1);border:2px solid rgba(245,166,35,.3);display:flex;align-items:center;justify-content:center;font-size:36px;}
+  .sname{font-size:18px;font-weight:800;}.sreg{font-size:13px;color:#f5a623;font-weight:700;margin-top:3px;}.sdept{font-size:11px;opacity:.55;margin-top:2px;}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 14px;}
+  .field{background:rgba(255,255,255,.07);border-radius:10px;padding:10px 12px;}
+  .fl{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;opacity:.45;margin-bottom:3px;}
+  .fv{font-size:14px;font-weight:700;}.fv.hi{color:#f5a623;}
+  .bc{padding:12px 20px;border-top:1px dashed rgba(255,255,255,.15);text-align:center;}
+  .ft{background:rgba(0,0,0,.2);padding:10px 20px;display:flex;justify-content:space-between;font-size:10px;opacity:.4;}
+  </style></head><body>
+  <div class="pass">
+    <div class="stripe"></div>
+    <div class="hd"><div><div class="uittc">UITTC</div><div style="font-size:9px;opacity:.45;margin-top:2px;letter-spacing:1px;text-transform:uppercase;">Unnamalai Institute of Technology</div></div><div class="chip">2024–2025</div></div>
+    <div class="photo-row"><div class="avatar">🧑‍🎓</div><div><div class="sname">${s.name}</div><div class="sreg">${s.reg}</div><div class="sdept">${s.dept||''} · ${s.year} · ${s.sem}</div></div></div>
+    <div class="stripe" style="height:4px;margin-bottom:14px;"></div>
+    <div class="fields">
+      <div class="field"><div class="fl">Bus Stop</div><div class="fv hi">${s.stop}</div></div>
+      <div class="field"><div class="fl">Valid Until</div><div class="fv">May 2025</div></div>
+      <div class="field"><div class="fl">Issued On</div><div class="fv">15 Jan 2025</div></div>
+      <div class="field"><div class="fl">Pass Status</div><div class="fv hi">ACTIVE</div></div>
+    </div>
+    <div class="bc"><div style="font-size:10px;opacity:.4;letter-spacing:3px;">${s.reg}-2025-S2</div></div>
+    <div class="ft"><span>UITTC – Student Bus Pass</span><span>${s.sem} | 2024–25</span></div>
+  </div>
+  <p style="text-align:center;color:#5a6a8a;font-size:12px;margin-top:20px;">Print this page or save as PDF for your bus pass.</p>
+  </body></html>`;
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'UITTC_BusPass_' + s.reg + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showNotif('⬇️ Bus Pass downloaded successfully!');
+  } catch(e) {
+    console.error('Error downloading pass:', e);
+    showNotif('❌ Failed to download pass!', true);
+  }
+}
+
+function logout() {
+  document.getElementById('admin-dashboard').style.display = 'none';
+  document.getElementById('student-dashboard').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('a-user').value='';
+  document.getElementById('a-pass').value='';
+  document.getElementById('s-regnum').value='';
+  document.getElementById('s-dob').value='';
+  currentStudentReg = null;
+}
+
+// ===================== ADMIN PAGES =====================
+function showAdminPage(page, btn) {
+  document.querySelectorAll('#admin-dashboard .page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#admin-dashboard .nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+  const titles = { dashboard:'Dashboard', students:'Students', fees:'Fees Management', 'bus-stops':'Bus Stop Wise List', notifications:'Send Notifications', 'paid-list':'Paid Students', 'pending-list':'Pending Students' };
+  document.getElementById('admin-page-title').textContent = titles[page] || page;
+  if(page==='bus-stops') renderBusStopList('bus-stop-list', null);
+  if(page==='paid-list') renderBusStopList('paid-bus-stop-list', true);
+  if(page==='pending-list') renderBusStopList('pending-bus-stop-list', false);
+}
+
+function showStudentPage(page, btn) {
+  document.querySelectorAll('#student-dashboard .page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#student-dashboard .nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+  const titles = { 's-dashboard':'My Dashboard', 's-pass':'My Bus Pass', 's-fees':'Fees Status', 's-stoplist':'Paid Students – Bus Stop Wise', 's-profile':'My Profile' };
+  document.getElementById('student-page-title').textContent = titles[page] || page;
+  if (page === 's-stoplist') renderStudentStopWise();
+}
+
+function initAdminData() {
+  renderStudentsTable(students);
+  renderFeesTable(students);
+  renderBusStopSummary();
+}
+
+function renderStudentsTable(data) {
+  const tbody = document.getElementById('students-tbody');
+  tbody.innerHTML = data.map(s => `
+    <tr>
+      <td><div class="student-avatar">${s.name.split(' ').map(n=>n[0]).join('').substring(0,2)}</div></td>
+      <td><strong>${s.reg}</strong></td>
+      <td>${s.name}</td>
+      <td>${s.year} / ${s.sem}</td>
+      <td>📍 ${s.stop}</td>
+      <td><span class="badge ${s.paid?'badge-success':'badge-danger'}">${s.paid?'Paid':'Pending'}</span></td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="editStudent('${s.reg}')">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.reg}')">🗑️</button>
+      </td>
+    </tr>`).join('');
+}
+
+function renderFeesTable(data) {
+  const tbody = document.getElementById('fees-tbody');
+  tbody.innerHTML = data.map(s => `
+    <tr>
+      <td><strong>${s.reg}</strong></td>
+      <td>${s.name}</td>
+      <td>${s.stop}</td>
+      <td>₹4,500</td>
+      <td><span class="badge ${s.paid?'badge-success':'badge-warning'}">${s.paid?'Paid':'Pending'}</span></td>
+      <td>
+        ${s.paid
+          ? `<button class="btn btn-danger btn-sm" onclick="toggleFees('${s.reg}')">Mark Pending</button>`
+          : `<button class="btn btn-success btn-sm" onclick="toggleFees('${s.reg}')">Mark Paid</button>`
+        }
+      </td>
+    </tr>`).join('');
+}
+
+function toggleFees(reg) {
+  const s = students.find(x => x.reg === reg);
+  if(s){ s.paid = !s.paid; saveToLocalStorage(); renderFeesTable(students); renderStudentsTable(students); renderBusStopSummary(); showNotif('✅ Payment status updated for ' + s.name); }
+}
+
+function renderBusStopSummary() {
+  const tbody = document.getElementById('stop-summary-tbody');
+  tbody.innerHTML = stopList.map(stop => {
+    const total = students.filter(s=>s.stop===stop).length;
+    const paid  = students.filter(s=>s.stop===stop && s.paid).length;
+    if(total===0) return '';
+    return `<tr><td>📍 ${stop}</td><td>${total}</td><td><span class="badge badge-success">${paid}</span></td></tr>`;
+  }).filter(r=>r).join('');
+}
+
+function renderBusStopList(containerId, paidFilter) {
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  container.innerHTML = stopList.map(stop => {
+    let filtered = students.filter(s => s.stop === stop);
+    if(paidFilter === true)  filtered = filtered.filter(s => s.paid);
+    if(paidFilter === false) filtered = filtered.filter(s => !s.paid);
+    if(!filtered.length) return '';
+    return `<div class="bus-stop-group">
+      <div class="bus-stop-header">
+        <span class="bus-stop-icon">🚏</span>
+        <span class="bus-stop-name">${stop}</span>
+        <span class="bus-stop-count">${filtered.length} students</span>
+      </div>
+      <table class="data-table" style="border-radius:0 0 10px 10px;overflow:hidden;">
+        <thead><tr><th>Reg No.</th><th>Name</th><th>Year/Sem</th><th>Status</th></tr></thead>
+        <tbody>${filtered.map(s=>`
+          <tr>
+            <td><strong>${s.reg}</strong></td>
+            <td>${s.name}</td>
+            <td>${s.year} / ${s.sem}</td>
+            <td><span class="badge ${s.paid?'badge-success':'badge-warning'}">${s.paid?'Paid':'Pending'}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+function filterStudents(val) {
+  const filtered = students.filter(s =>
+    s.name.toLowerCase().includes(val.toLowerCase()) ||
+    s.reg.toLowerCase().includes(val.toLowerCase())
+  );
+  renderStudentsTable(filtered);
+}
+
+function filterByStop(stop) {
+  const filtered = stop ? students.filter(s => s.stop === stop) : students;
+  renderStudentsTable(filtered);
+}
+
+function deleteStudent(reg) {
+  if(!confirm('Are you sure you want to delete this student?')) return;
+  const idx = students.findIndex(s => s.reg === reg);
+  if(idx > -1) { const name = students[idx].name; students.splice(idx, 1); saveToLocalStorage(); renderStudentsTable(students); renderFeesTable(students); showNotif('🗑️ Student ' + name + ' deleted!'); }
+}
+
+function sendReminderAll() {
+  const pending = students.filter(s => !s.paid);
+  showNotif(`📧 Reminder sent to ${pending.length} pending students!`);
+}
+
+// ===================== MODALS =====================
+function openAddStudentModal() {
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">➕ Add New Student</div>
+    <div class="modal-grid">
+      <div class="form-group"><label class="form-label">Register Number</label><input class="form-input" id="m-reg" placeholder="22CS001"/></div>
+      <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="m-name" placeholder="Student Name"/></div>
+      <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" type="date" id="m-dob"/></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="m-email" placeholder="student@unnamalai.edu.in"/></div>
+      <div class="form-group"><label class="form-label">Bus Stop</label>
+        <select class="form-select" id="m-stop"><option value="">Select</option>${stopList.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Year</label>
+        <select class="form-select" id="m-year"><option>I Year</option><option>II Year</option><option>III Year</option><option>IV Year</option></select></div>
+      <div class="form-group"><label class="form-label">Semester</label>
+        <select class="form-select" id="m-sem"><option>Sem 1</option><option>Sem 2</option></select></div>
+      <div class="form-group"><label class="form-label">Department</label>
+        <select class="form-select" id="m-dept"><option>CSE</option><option>ECE</option><option>EEE</option><option>MECH</option><option>CIVIL</option><option>IT</option></select></div>
+    </div>
+    <div class="photo-upload" style="margin-top:8px;">📸 Click to upload student photo</div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewStudent()">Save Student</button>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function saveNewStudent() {
+  const reg  = document.getElementById('m-reg').value.trim().toUpperCase();
+  const name = document.getElementById('m-name').value.trim();
+  const dob  = document.getElementById('m-dob').value;
+  const email= document.getElementById('m-email').value.trim();
+  const stop = document.getElementById('m-stop').value;
+  const year = document.getElementById('m-year').value;
+  const sem  = document.getElementById('m-sem').value;
+  const dept = document.getElementById('m-dept').value;
+  
+  if(!reg||!name||!dob||!stop||!email) { showNotif('⚠️ Please fill all required fields!',true); return; }
+  if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { showNotif('⚠️ Please enter a valid email!',true); return; }
+  if(students.some(s=>s.reg===reg)) { showNotif('⚠️ Registration number already exists!',true); return; }
+  
+  students.push({reg,name,dob,stop,year,sem,dept,email,paid:false});
+  saveToLocalStorage();
+  renderStudentsTable(students); renderFeesTable(students); renderBusStopSummary();
+  closeModal(); showNotif('✅ Student ' + name + ' added!');
+}
+
+function editStudent(reg) {
+  const s = students.find(x => x.reg === reg);
+  if(!s) return;
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">✏️ Edit Student: ${s.reg}</div>
+    <div class="modal-grid">
+      <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="e-name" value="${s.name}"/></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="e-email" value="${s.email}"/></div>
+      <div class="form-group"><label class="form-label">Bus Stop</label>
+        <select class="form-select" id="e-stop">${stopList.map(st=>`<option ${st===s.stop?'selected':''}>${st}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Year</label>
+        <select class="form-select" id="e-year">
+          ${['I Year','II Year','III Year','IV Year'].map(y=>`<option ${y===s.year?'selected':''}>${y}</option>`).join('')}
+        </select></div>
+      <div class="form-group"><label class="form-label">Semester</label>
+        <select class="form-select" id="e-sem">
+          <option ${s.sem==='Sem 1'?'selected':''}>Sem 1</option>
+          <option ${s.sem==='Sem 2'?'selected':''}>Sem 2</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Fees Status</label>
+        <select class="form-select" id="e-paid">
+          <option value="true" ${s.paid?'selected':''}>Paid</option>
+          <option value="false" ${!s.paid?'selected':''}>Pending</option>
+        </select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit('${reg}')">Update</button>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function saveEdit(reg) {
+  const s = students.find(x => x.reg === reg);
+  if(s) {
+    const name = document.getElementById('e-name').value.trim();
+    const email = document.getElementById('e-email').value.trim();
+    if(!name || !email) { showNotif('⚠️ Name and email are required!',true); return; }
+    if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { showNotif('⚠️ Please enter a valid email!',true); return; }
+    
+    s.name  = name;
+    s.email = email;
+    s.stop  = document.getElementById('e-stop').value;
+    s.year  = document.getElementById('e-year').value;
+    s.sem   = document.getElementById('e-sem').value;
+    s.paid  = document.getElementById('e-paid').value === 'true';
+    saveToLocalStorage();
+    renderStudentsTable(students); renderFeesTable(students); renderBusStopSummary();
+    closeModal(); showNotif('✅ Student updated successfully!');
+  }
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.getElementById('modal-overlay').addEventListener('click', e => { if(e.target===document.getElementById('modal-overlay')) closeModal(); });
+
+// ===================== NOTIFICATION =====================
+function showNotif(msg, isError=false) {
+  const n = document.getElementById('notification');
+  n.textContent = msg;
+  n.className = 'notification' + (isError?' error':'');
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+</script>
+</body>
+</html>
